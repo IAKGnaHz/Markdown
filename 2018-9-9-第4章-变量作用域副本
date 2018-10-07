@@ -1,0 +1,186 @@
+---
+layout:     post
+title:      《JavaScript-高级程序设计》笔记
+subtitle:   第4章-变量作用域
+date:       2018-9-9
+author:     IAKGnaHz
+header-img: img/post-a.jpg
+catalog: true
+tags:
+    - js笔记
+    
+---
+
+
+# 变量，作用域和内存问题
+## 4.1基本类型值和引用类型值
+> 基本类型: 简单的数据段
+> 
+> `Undefined ` `Null ` `Number ` `String` `Boolean`
+> 
+> 引用类型值: 指哪些可能由多个值构成的对象
+> 
+> 引用类型的值是保存在内存中的对象，js不允许直接访问内存中的位置，也就是说不能直接操作对象的内存空间。在操作对象时，实际是在操作对象的引用
+
+
+#### 4.1.1 动态的属性
+定义基本类型和引用类型的方式是类似的，创建一个变量为其赋值。
+
+引用类型的值，可以添加属性和方法,而基本类型则不可以。
+
+```javascript
+var person = new Object();
+person.name = "IakgnaHz";
+console.log(person.name);
+```
+
+#### 4.1.2 复制变量值
+
+基本类型:复制变量值后，两个变量可以参与任何操作而不会相互影响
+
+引用类型:复制变量值指的是复制该引用类型变量的指针，在对其中任何一个进行相关操作时，都会影响到另一个值。
+
+>
+![](https://ws4.sinaimg.cn/large/006tNbRwgy1fv347gykgcj30nd0f5418.jpg)
+
+
+#### 4.1.3 传递参数
+
+> ECMAScript 中所有的函数的参数都是按值传递的(也就是说，将函数外部的值复制给函数内部)
+> 
+> + 基本类型:相当于变量的复制，函数内部外部之间相互独立。
+> 
+> ```
+> function add(num) {
+> 		num += 10;
+> 		return num;
+> }
+> var count = 20;
+> var result = add(count);
+> console.log(count);		//20 值没有发生变化
+> console.log(result);	//30
+> ```
+> 
+> + 引用类型:函数传入的为引用类型的值的指针，函数内部的局部变量的变化会反映在函数的外部。
+> 
+> ```
+> function sayName(obj) {
+> 		obj.name = "Curry";
+> }
+> var person = ner Object();
+> sayName(person);
+> console.log(person.name);   //Curry
+> ```
+> 
+> + 请看下面的例子
+> 
+>```
+>function sayName(obj) {
+>			obj.name = "Curry";
+>			obj = new Object();
+>			obj.name = "Kevin";
+>}
+>var person = new Object();
+>sayName(person);
+>console.log(person.name);    //Curry 并没有变成 Kevin 
+>```
+>实际上，在函数内部重写obj时，这个变量引用就是一个局部变量了，在函数执行后就被销毁了。
+
+
+#### 4.1.4 检测类型
+
++ `typeof`:操作符
++ `instanceof`:用于检测引用值类型变量和对象。
++ ![](https://ws2.sinaimg.cn/large/006tNbRwgy1fv3orb4bgqj30ot02tjs7.jpg)
+
+#### 4.1.5执行环境及作用域
+
+```javascript
+<body>
+			<script type="text/javascript">
+				var color = 'blue';
+				function changeColor() {
+					var anotherColor = 'red';
+					(function swapColors() {
+						var tempColor = anotherColor;
+						color = tempColor;
+						anotherColor = color;
+						console.log(color);
+						/*这里可以访问 color anotherColor tempColor*/
+					})()  /*添加立即执行函数*/
+					/*这里可以访问 color anotherColor 不能访问 tempColor 和 swapColor */
+				}
+				/*这里可以访问 color changeColor()*/
+				changeColor();
+			</script>	
+</body>
+</html>
+```
+
+以上的代码涉及3执行环境，全局环境，changeColor()环境，swapColor()环境，下图展示了上述代码的作用域链
+
+![](https://ws1.sinaimg.cn/large/006tNbRwgy1fv3qg0eurej30f70cymxu.jpg)
+
+> 如上图所示，内部环境的作用域链可以访问外部作用域链中的所有变量，但外部环境无法访问内部环境的变量和函数。
+
+
+#### 4.2.1 延长作用域链
++ with 语句
+
+```
+function buildUrl() {
+		var qs = "?debug=ture";
+		
+		with(location){
+			var url = href + qs;
+			}
+			return url;
+}
+在此 with语句接受 location 对象，则在其变量对象中包含location对象的所有变量和方法，而这个变量对象被添加到作用域链的前端。
+```
+
++ try-catch 语句:会创建一个新的变量对象，其中包含的是被抛出的错误对象的声明。
+
+#### 4.2.2 没有块级作用域
+
+```
+<body>
+			<script type="text/javascript">
+				if(true) {
+					color = 'blue';
+				}
+				console.log(color);
+			</script>	
+</body>
+js中 if 语句中的变量声明会将变量添加到当前执行的环境中（当前是全局环境）
+```
+
++ 声明变量:实用var 声明变量，声明的变量会添加到最近的环境中，在函数内部中，最接近的是局部环境。在with 语句中，最接近的是 函数环境。如果未使用 var 声明变量，则该变量会添加到全局环境中。
++ 查询标识符:当在某个环境中读入或引入一个标识符时，在作用链中搜索该标识符。
+
+
+## 4.3 垃圾回收
+
++ js具有自动垃圾收集机制
++ 函数中的局部变量:只在函数执行的过程中存在，在执行的过程中，会为局部变量在栈内存上分配相应的空间，当函数执行完毕后，就会被销毁。
++ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
